@@ -242,7 +242,14 @@ func (i *Itv) HandleMainRequest(w http.ResponseWriter, r *http.Request, cdn stri
 	redirectPrefix := redirectURL[:strings.LastIndex(redirectURL, "/")+1]
 
 	// 替换TS文件的链接
-	golang := "https://lv.cgzf.ccwu.cc" + r.URL.Path
+	host := os.Getenv("ITV_HOST")
+	if host == "" {
+		host = r.Header.Get("X-Forwarded-Host")
+	}
+	if host == "" {
+		host = r.Host
+	}
+	golang := "https://" + host + r.URL.Path
 	re := regexp.MustCompile(`((?i).*?\.ts)`)
 	data = re.ReplaceAllStringFunc(data, func(match string) string {
 		return golang + "?ts=" + redirectPrefix + match
@@ -304,10 +311,7 @@ func getHTTPResponse(requestURL string) (string, string, error) {
 	}
 	defer resp.Body.Close()
 
-	redirectURL := resp.Header.Get("Location")
-	if redirectURL == "" {
-		redirectURL = requestURL
-	}
+	redirectURL := resp.Request.URL.String()
 
 	body, err := readResponseBody(resp)
 	if err != nil {
