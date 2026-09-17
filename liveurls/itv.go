@@ -6,6 +6,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -268,24 +269,47 @@ func (i *Itv) HandleMainRequest(w http.ResponseWriter, r *http.Request, cdn stri
 }
 
 func (i *Itv) HandleTsRequest(w http.ResponseWriter, r *http.Request) {
-	// 从原始查询串中提取ts值，保持百分号编码不被解码，
-	// 否则AuthInfo中的+、=会被破坏导致边缘校验失败(403 reason 25)。
-	ts := ""
-	if raw := r.URL.RawQuery; raw != "" {
-		for _, part := range strings.Split(raw, "&") {
-			kv := strings.SplitN(part, "=", 2)
-			if kv[0] == "ts" && len(kv) == 2 {
-				ts = kv[1]
-			}
+	// 从原始查询串中提取ts值。
+	// 注意：外部代理(如Cloudflare)可能对整个ts值重新做了百分号编码，
+	// 因此这里先做一次完整解码，再重新编码后原样转发，避免AuthInfo等
+	// 参数中的+、=被破坏导致边缘校验失败(403 reason 25)。
+	raw := r.URL.RawQuery
+	tsVal := ""
+	for _, part := range strings.Split(raw, "&") {
+		kv := strings.SplitN(part, "=", 2)
+		if kv[0] == "ts" && len(kv) == 2 {
+			tsVal = kv[1]
 		}
 	}
-	if ts == "" {
+	if tsVal == "" {
 		http.Error(w, "missing ts", http.StatusBadRequest)
+		return
+	}
+
+	ts, err := url.QueryUnescape(tsVal)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	// 将$替换回&
 	ts = strings.ReplaceAll(ts, "$", "&")
+
+	// 重新编码query部分的值，确保发给边缘的是原始字节
+	if u, perr := url.Parse(ts); perr == nil && u.RawQuery != "" {
+		parts := strings.Split(u.RawQuery, "&")
+		escaped := make([]string, 0, len(parts))
+		for _, p := range parts {
+			kv := strings.SplitN(p, "=", 2)
+			if len(kv) == 2 {
+				escaped = append(escaped, url.QueryEscape(kv[0])+"="+url.QueryEscape(kv[1]))
+			} else {
+				escaped = append(escaped, url.QueryEscape(kv[0]))
+			}
+		}
+		u.RawQuery = strings.Join(escaped, "&")
+		ts = u.String()
+	}
 
 	w.Header().Set("Content-Type", "video/MP2T")
 	content, _, err := getHTTPResponse(ts)
