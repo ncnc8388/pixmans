@@ -242,7 +242,7 @@ func (i *Itv) HandleMainRequest(w http.ResponseWriter, r *http.Request, cdn stri
 	redirectPrefix := redirectURL[:strings.LastIndex(redirectURL, "/")+1]
 
 	// 替换TS文件的链接
-	golang := "https://live.cgzf.ccwu.cc" + r.URL.Path
+	golang := "https://lv.cgzf.ccwu.cc" + r.URL.Path
 	re := regexp.MustCompile(`((?i).*?\.ts)`)
 	data = re.ReplaceAllStringFunc(data, func(match string) string {
 		return golang + "?ts=" + redirectPrefix + match
