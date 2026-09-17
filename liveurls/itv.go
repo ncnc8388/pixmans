@@ -242,6 +242,10 @@ func (i *Itv) HandleMainRequest(w http.ResponseWriter, r *http.Request, cdn stri
 	redirectPrefix := redirectURL[:strings.LastIndex(redirectURL, "/")+1]
 
 	// 替换TS文件的链接
+	scheme := os.Getenv("ITV_SCHEME")
+	if scheme == "" {
+		scheme = "https"
+	}
 	host := os.Getenv("ITV_HOST")
 	if host == "" {
 		host = r.Header.Get("X-Forwarded-Host")
@@ -249,7 +253,7 @@ func (i *Itv) HandleMainRequest(w http.ResponseWriter, r *http.Request, cdn stri
 	if host == "" {
 		host = r.Host
 	}
-	golang := "https://" + host + r.URL.Path
+	golang := scheme + "://" + host + r.URL.Path
 	re := regexp.MustCompile(`((?i).*?\.ts)`)
 	data = re.ReplaceAllStringFunc(data, func(match string) string {
 		return golang + "?ts=" + redirectPrefix + match
