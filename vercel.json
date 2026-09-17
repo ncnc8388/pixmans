@@ -1,4 +1,10 @@
 {
+  "functions": {
+    "api/**/*.go": {
+      "regions": ["hkg1"],
+      "maxDuration": 60
+    }
+  },
   "routes": [
     {
       "src": "/live/.*",
