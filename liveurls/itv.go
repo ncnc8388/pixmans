@@ -312,16 +312,23 @@ func (i *Itv) HandleTsRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "video/MP2T")
-	content, _, err := getHTTPResponse(ts)
+
+	// 流式透传：边缘返回的真实TS分片可能较大(1~2MB甚至更大)，
+	// 若整块缓冲再回写给播放器，会被Vercel等平台的大响应体限制拦截，
+	// 因此这里把边缘响应直接边读边写回客户端。
+	client := newITVClient()
+	resp, err := client.Get(ts)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadGateway)
 		return
 	}
-	w.WriteHeader(http.StatusOK) // Set the status code to 200
-	w.Write([]byte(content))     // Write the response body
+	defer resp.Body.Close()
+
+	w.WriteHeader(resp.StatusCode)
+	io.Copy(w, resp.Body)
 }
 
-func getHTTPResponse(requestURL string) (string, string, error) {
+func newITVClient() *http.Client {
 	dialer := &net.Dialer{
 		Timeout: 5 * time.Second,
 	}
@@ -345,10 +352,14 @@ func getHTTPResponse(requestURL string) (string, string, error) {
 		},
 	}
 
-	client := &http.Client{
+	return &http.Client{
 		Transport: transport,
 		Timeout:   25 * time.Second,
 	}
+}
+
+func getHTTPResponse(requestURL string) (string, string, error) {
+	client := newITVClient()
 
 	resp, err := client.Get(requestURL)
 	if err != nil {
