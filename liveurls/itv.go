@@ -267,7 +267,23 @@ func (i *Itv) HandleMainRequest(w http.ResponseWriter, r *http.Request, cdn stri
 	w.Write([]byte(data))        // Write the response body
 }
 
-func (i *Itv) HandleTsRequest(w http.ResponseWriter, ts string) {
+func (i *Itv) HandleTsRequest(w http.ResponseWriter, r *http.Request) {
+	// 从原始查询串中提取ts值，保持百分号编码不被解码，
+	// 否则AuthInfo中的+、=会被破坏导致边缘校验失败(403 reason 25)。
+	ts := ""
+	if raw := r.URL.RawQuery; raw != "" {
+		for _, part := range strings.Split(raw, "&") {
+			kv := strings.SplitN(part, "=", 2)
+			if kv[0] == "ts" && len(kv) == 2 {
+				ts = kv[1]
+			}
+		}
+	}
+	if ts == "" {
+		http.Error(w, "missing ts", http.StatusBadRequest)
+		return
+	}
+
 	// 将$替换回&
 	ts = strings.ReplaceAll(ts, "$", "&")
 
@@ -307,6 +323,7 @@ func getHTTPResponse(requestURL string) (string, string, error) {
 
 	client := &http.Client{
 		Transport: transport,
+		Timeout:   25 * time.Second,
 	}
 
 	resp, err := client.Get(requestURL)

@@ -32,7 +32,7 @@ func liveHandler(w http.ResponseWriter, r *http.Request) {
 				if ts == "" {
 					itvobj.HandleMainRequest(w, r, cdn, rid)
 				} else {
-					itvobj.HandleTsRequest(w, ts)
+					itvobj.HandleTsRequest(w, r)
 				}
 			} else {
 				http.Error(w, "公共服务不提供TV直播", http.StatusForbidden)
