@@ -5,12 +5,15 @@ import (
   "Golang/list"
   "Golang/utils"
   "fmt"
+  "io"
+  "net"
   "net/http"
   "strings"
   "encoding/json"
   "strconv"
   "log"
   "os"
+  "time"
 )
 
 // 本地服务端处理 /live/ 前缀的旧格式路由，逻辑与 vercel.json 中 api/live.go 一致。
@@ -180,6 +183,27 @@ func Handler(w http.ResponseWriter, r *http.Request) {
           break
         }
         i++
+      }
+    // 诊断
+    case "/diag":
+      w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+      diagClient := &http.Client{Timeout: 8 * time.Second}
+      var egressIP string
+      resp, err := diagClient.Get("https://api.ipify.org")
+      if err != nil {
+        egressIP = "failed: " + err.Error()
+      } else {
+        b, _ := io.ReadAll(resp.Body)
+        resp.Body.Close()
+        egressIP = string(b)
+      }
+      fmt.Fprintf(w, "egress_ip=%s\n", egressIP)
+      conn, err := net.DialTimeout("tcp", "39.136.124.73:80", 8*time.Second)
+      if err != nil {
+        fmt.Fprintf(w, "edge_39.136.124.73:80=no (%v)\n", err)
+      } else {
+        fmt.Fprintf(w, "edge_39.136.124.73:80=yes (%s)\n", conn.RemoteAddr().String())
+        conn.Close()
       }
     // 其他链接
 	  default:
