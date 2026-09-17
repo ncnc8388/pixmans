@@ -28,7 +28,7 @@ var (
 	ipTVHostMappings = loadIPTVHostMappings()
 	programList      = map[string]string{
 		"fifalive/6000000001000029752.m3u8":    "http://gslbserv.itv.cmvideo.cn:80/1.m3u8?channel-id=FifastbLive&Contentid=3000000010000017678&livemode=1&stbId=yu&mode=1",
-		"fifalive/5000000004000002226.m3u8":      "http://gslbserv.itv.cmvideo.cn:80/1.m3u8?channel-id=FifastbLive&Contentid=3000000020000011524&livemode=1&stbId=yu&mode=1",
+		"fifalive/5000000004000002226.m3u8":    "http://gslbserv.itv.cmvideo.cn:80/1.m3u8?channel-id=FifastbLive&Contentid=3000000020000011524&livemode=1&stbId=yu&mode=1",
 		"ystenlive/1000000005000265001.m3u8":   "http://gslbserv.itv.cmvideo.cn:80/1000000005000265001/1.m3u8?channel-id=ystenlive&Contentid=1000000005000265001&livemode=1&stbId=3",
 		"ystenlive/1000000001000023315.m3u8":   "http://gslbserv.itv.cmvideo.cn:80/1000000001000023315/1.m3u8?channel-id=ystenlive&Contentid=1000000001000023315&livemode=1&stbId=3",
 		"wasusyt/6000000001000014161.m3u8":     "http://gslbserv.itv.cmvideo.cn:80/6000000001000014161/1.m3u8?channel-id=wasusyt&Contentid=6000000001000014161&livemode=1&stbId=3",
