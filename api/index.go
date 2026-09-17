@@ -16,7 +16,7 @@ import (
   "time"
 )
 
-// 本地服务端处理 /live/ 前缀的旧格式路由，逻辑与 vercel.json 中 api/live.go 一致。
+// 本地服务端处理 /live/ 前缀的旧格式路由，逻辑与原 api/live.go 一致。
 func LiveHandler(w http.ResponseWriter, r *http.Request) {
 	adurl := "https://cdn.jsdelivr.net/gh/feiyangdigital/testvideo/sdr1080pvideo/index.m3u8"
 	path := r.URL.Path

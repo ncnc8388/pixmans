@@ -7,10 +7,6 @@
   },
   "routes": [
     {
-      "src": "/live/.*",
-      "dest": "/api/live.go"
-    },
-    {
       "src": "/yqk/.*",
       "dest": "/api/yqk/yqk.go"
     },
