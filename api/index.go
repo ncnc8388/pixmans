@@ -8,6 +8,7 @@ import (
   "io"
   "net"
   "net/http"
+  "runtime/debug"
   "strings"
   "encoding/json"
   "strconv"
@@ -101,6 +102,13 @@ func LiveHandler(w http.ResponseWriter, r *http.Request) {
 
 // vercel 平台会将请求传递给该函数，这个函数名随意，但函数参数必须按照该规则。
 func Handler(w http.ResponseWriter, r *http.Request) {
+  defer func() {
+    if rec := recover(); rec != nil {
+      msg := fmt.Sprintf("panic: %v\n%s", rec, string(debug.Stack()))
+      log.Println(msg)
+      http.Error(w, msg, http.StatusInternalServerError)
+    }
+  }()
   // 是否禁用TV
   enableTV := os.Getenv("TV") != "false" 
   path := r.URL.Path

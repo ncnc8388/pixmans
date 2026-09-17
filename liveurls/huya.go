@@ -73,7 +73,7 @@ func getContent(apiUrl string) ([]byte, error) {
 	req.Header.Set("upgrade-insecure-requests", "1")
 	req.Header.Set("user-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36")
 
-	client := &http.Client{}
+	client := &http.Client{Timeout: 5 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -86,7 +86,10 @@ func getContent(apiUrl string) ([]byte, error) {
 var streamInfo = map[string]any{"flv": make(map[string]string), "hls": make(map[string]string)}
 
 func getUid() string {
-	content, _ := getContent("https://udblgn.huya.com/web/anonymousLogin")
+	content, err := getContent("https://udblgn.huya.com/web/anonymousLogin")
+	if err != nil || len(content) == 0 {
+		return ""
+	}
 	var responseData ResponseData
 	json.Unmarshal(content, &responseData)
 	uid := responseData.Data.Uid
